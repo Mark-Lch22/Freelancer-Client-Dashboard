@@ -14,10 +14,12 @@ WORKDIR /app
 
 # Copy manifests first so Docker can cache the npm-install layer separately
 # from source changes. Re-installing only happens when package*.json changes.
-COPY package.json package-lock.json ./
+COPY package.json ./
 
-# Install ALL dependencies (including devDependencies) needed to compile TS
-RUN npm ci
+# Install ALL dependencies (including devDependencies) needed to compile TS.
+# Using `npm install` because the backend has no dedicated lockfile — the root
+# workspace lockfile lives outside this build context.
+RUN npm install
 
 # Copy source after deps so edits to .ts files don't bust the install cache
 COPY . .
@@ -46,8 +48,8 @@ WORKDIR /app
 
 # Copy manifests and install ONLY production dependencies.
 # --omit=dev ensures devDependencies are never installed here.
-COPY --chown=node:node package.json package-lock.json ./
-RUN npm ci --omit=dev
+COPY --chown=node:node package.json ./
+RUN npm install --omit=dev
 
 # Copy the compiled JavaScript from the builder stage — no .ts files included.
 COPY --chown=node:node --from=builder /app/dist ./dist
