@@ -194,7 +194,7 @@ export function BrowseProjectsPage(): React.ReactElement {
   const hasFilters = !!(skillsParam || budgetMinParam || budgetMaxParam);
 
   return (
-    <div className="flex min-h-full">
+    <div className="flex w-full">
       {/* Sidebar filters */}
       <aside className="hidden md:flex w-64 border-r flex-col gap-4 p-4 shrink-0">
         <div className="flex items-center gap-2 text-sm font-medium">
