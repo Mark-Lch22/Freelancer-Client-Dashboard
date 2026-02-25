@@ -11,6 +11,7 @@ import { ClientDashboard } from './pages/ClientDashboard';
 import { FreelancerDashboardPage } from './pages/freelancer/FreelancerDashboardPage';
 import { BrowseProjectsPage } from './pages/freelancer/BrowseProjectsPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
+import { DashboardLayout } from './components/layout/DashboardLayout';
 import { UserRole } from './types/auth';
 
 const queryClient = new QueryClient({
@@ -61,13 +62,17 @@ export default function App(): React.ReactNode {
 
               {/* Client routes */}
               <Route element={<RoleRoute allowedRole={UserRole.CLIENT} />}>
-                <Route path="/client/dashboard" element={<ClientDashboard />} />
+                <Route element={<DashboardLayout />}>
+                  <Route path="/client/dashboard" element={<ClientDashboard />} />
+                </Route>
               </Route>
 
               {/* Freelancer routes */}
               <Route element={<RoleRoute allowedRole={UserRole.FREELANCER} />}>
-                <Route path="/freelancer/dashboard" element={<FreelancerDashboardPage />} />
-                <Route path="/freelancer/projects" element={<BrowseProjectsPage />} />
+                <Route element={<DashboardLayout />}>
+                  <Route path="/freelancer/dashboard" element={<FreelancerDashboardPage />} />
+                  <Route path="/freelancer/projects" element={<BrowseProjectsPage />} />
+                </Route>
               </Route>
             </Route>
 

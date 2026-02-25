@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Briefcase, ChevronLeft, ChevronRight, LayoutDashboard, Search, SlidersHorizontal } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Briefcase, ChevronLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -138,7 +138,6 @@ function ProjectCard({ project, hasBid, onBid }: ProjectCardProps): React.ReactE
 export function BrowseProjectsPage(): React.ReactElement {
   const [searchParams, setSearchParams] = useSearchParams();
   const [bidTarget, setBidTarget] = useState<Project | null>(null);
-  const navigate = useNavigate();
 
   // Derive filters from URL params
   const page = Number(searchParams.get('page') ?? '1');
@@ -195,9 +194,9 @@ export function BrowseProjectsPage(): React.ReactElement {
   const hasFilters = !!(skillsParam || budgetMinParam || budgetMaxParam);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex min-h-full">
       {/* Sidebar filters */}
-      <aside className="hidden md:flex w-64 border-r flex-col gap-4 p-4 shrink-0 overflow-y-auto">
+      <aside className="hidden md:flex w-64 border-r flex-col gap-4 p-4 shrink-0">
         <div className="flex items-center gap-2 text-sm font-medium">
           <SlidersHorizontal className="h-4 w-4" />
           Filters
@@ -250,37 +249,22 @@ export function BrowseProjectsPage(): React.ReactElement {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur px-6 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold">Browse Projects</h1>
+      <main className="flex-1">
+        <div className="p-6">
+          {/* Results summary */}
+          <div className="flex items-center justify-between mb-4">
             {!isLoading && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {total} project{total !== 1 ? 's' : ''} found
               </p>
             )}
-          </div>
-
-          <div className="flex items-center gap-2">
             {hasFilters && (
               <Button size="sm" variant="outline" onClick={clearFilters}>
                 Clear filters
               </Button>
             )}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => navigate('/freelancer/dashboard')}
-              aria-label="Back to dashboard"
-              className="gap-1.5"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              Dashboard
-            </Button>
           </div>
-        </header>
 
-        <div className="p-6">
           {isError && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {error instanceof Error ? error.message : 'Failed to load projects'}

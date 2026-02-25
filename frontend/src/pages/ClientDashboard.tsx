@@ -1,18 +1,12 @@
 import { useAuth } from '../contexts/AuthContext';
 
 export function ClientDashboard(): React.ReactNode {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
-    <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 16px' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Client Dashboard</h1>
-        <button type="button" onClick={logout}>
-          Sign Out
-        </button>
-      </header>
-      <p>
-        Welcome, {user?.firstName} {user?.lastName}
+    <div className="p-6">
+      <p className="text-muted-foreground">
+        Welcome back, {user?.firstName} {user?.lastName}.
       </p>
     </div>
   );
