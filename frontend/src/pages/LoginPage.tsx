@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole, type LoginFormData } from '../types/auth';
 import { Button } from '@/components/ui/button';
@@ -24,8 +24,7 @@ export function LoginPage(): React.ReactNode {
   if (user) {
     const dest =
       user.role === UserRole.CLIENT ? '/client/dashboard' : '/freelancer/dashboard';
-    navigate(dest, { replace: true });
-    return null;
+    return <Navigate to={dest} replace />;
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {

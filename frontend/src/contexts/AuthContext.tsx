@@ -133,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactNode {
   );
 
   const logout = useCallback(async (): Promise<void> => {
+    setState({ user: null, session: null, loading: false });
     await supabase.auth.signOut();
   }, []);
 
