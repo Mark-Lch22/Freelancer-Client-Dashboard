@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { Milestone, CreateMilestoneDTO } from '@/types/domain';
+import { getMilestones } from '@/services/milestonesApi';
 
 export function useMilestones(projectId: string) {
   return useQuery<Milestone[]>({
     queryKey: ['milestones', projectId],
-    queryFn: () => api.get<Milestone[]>(`/projects/${projectId}/milestones`),
+    queryFn: () => getMilestones(projectId),
     enabled: !!projectId,
   });
 }
