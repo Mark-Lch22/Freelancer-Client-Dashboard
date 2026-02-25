@@ -324,7 +324,9 @@ export function ProjectDetailPage(): React.ReactElement {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               {isClientOwner ? 'Received Bids' : 'Submit a Bid'}
             </h2>
-            {isClientOwner && <BidList projectId={project.id} />}
+            {isClientOwner && user?.id === project.clientId && (
+              <BidList projectId={project.id} />
+            )}
             {isFreelancer && !project.freelancerId && <BidForm project={project} />}
           </div>
         )}
