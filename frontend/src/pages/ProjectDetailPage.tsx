@@ -89,6 +89,7 @@ const STATUS_TRANSITIONS: Partial<
   Record<ProjectStatus, { label: string; targetStatus: ProjectStatus }>
 > = {
   DRAFT: { label: 'Publish Project', targetStatus: 'OPEN' },
+  OPEN: { label: 'Start Project', targetStatus: 'IN_PROGRESS' },
   IN_PROGRESS: { label: 'Mark Complete', targetStatus: 'COMPLETED' },
 };
 
