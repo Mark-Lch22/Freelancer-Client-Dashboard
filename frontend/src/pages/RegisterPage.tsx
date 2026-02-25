@@ -29,7 +29,10 @@ export function RegisterPage(): React.ReactNode {
   const briefcaseRef = useRef<BriefcaseIconHandle>(null);
   const usersRef = useRef<UsersIconHandle>(null);
 
-  if (user) {
+  // Don't redirect while showing the post-registration confirmation screen.
+  // If email confirmation is disabled in Supabase the auth listener will set
+  // `user` immediately after signUp, which would otherwise jump past the UI.
+  if (user && !registered) {
     const dest =
       user.role === UserRole.CLIENT ? '/client/dashboard' : '/freelancer/dashboard';
     navigate(dest, { replace: true });
