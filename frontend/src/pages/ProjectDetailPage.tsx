@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectMilestones } from '@/components/freelancer/ProjectMilestones';
 import { LogTimeToggle } from '@/components/freelancer/LogTimeForm';
-import { BidList } from '@/components/project/BidList';
+import { BidList } from '@/components/bids/BidList';
 import { BidForm } from '@/components/project/BidForm';
 import { CreateMilestoneForm } from '@/components/project/CreateMilestoneForm';
 import { TimeEntryList } from '@/components/project/TimeEntryList';
@@ -325,7 +325,7 @@ export function ProjectDetailPage(): React.ReactElement {
               {isClientOwner ? 'Received Bids' : 'Submit a Bid'}
             </h2>
             {isClientOwner && user?.id === project.clientId && (
-              <BidList projectId={project.id} />
+              <BidList projectId={project.id} userRole={user?.role} projectStatus={project.status} />
             )}
             {isFreelancer && !project.freelancerId && <BidForm project={project} />}
           </div>

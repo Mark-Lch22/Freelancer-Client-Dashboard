@@ -15,6 +15,8 @@ export function RegisterPage(): React.ReactNode {
   const { register, user } = useAuth();
   const navigate = useNavigate();
 
+  const [registered, setRegistered] = useState(false);
+
   const [formData, setFormData] = useState<RegisterFormData>({
     email: '',
     password: '',
@@ -69,6 +71,8 @@ export function RegisterPage(): React.ReactNode {
       }
       return;
     }
+
+    setRegistered(true);
 
     const dest = formData.role === UserRole.CLIENT ? '/client/dashboard' : '/freelancer/dashboard';
     navigate(dest, { replace: true });

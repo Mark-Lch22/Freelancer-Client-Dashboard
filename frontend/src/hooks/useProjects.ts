@@ -43,7 +43,7 @@ export function useUpdateProjectStatus(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<Project, Error, UpdateProjectStatusDTO>({
-    mutationFn: (dto) => api.patch<Project>(`/projects/${projectId}/status`, dto),
+    mutationFn: async (dto) => (await api.patch<Project>(`/projects/${projectId}/status`, dto)).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       void queryClient.invalidateQueries({ queryKey: ['projects'] });

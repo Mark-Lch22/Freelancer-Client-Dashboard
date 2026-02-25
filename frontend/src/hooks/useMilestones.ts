@@ -15,7 +15,7 @@ export function useCreateMilestone(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<Milestone, Error, CreateMilestoneDTO>({
-    mutationFn: (dto) => api.post<Milestone>(`/projects/${projectId}/milestones`, dto),
+    mutationFn: async (dto) => (await api.post<Milestone>(`/projects/${projectId}/milestones`, dto)).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['milestones', projectId] });
     },
