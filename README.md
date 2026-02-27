@@ -24,6 +24,7 @@ A full-stack platform for managing the complete lifecycle of freelance engagemen
 - [CI/CD](#cicd)
 - [Deployment](#deployment)
 - [Documentation](#documentation)
+- [Diagrams](#diagrams)
 - [Contributing](#contributing)
 
 ---
@@ -518,6 +519,22 @@ The frontend nginx configuration handles SPA routing (all paths fall back to `in
 - [Architecture Decision Records](docs/adr/)
 - [AI Usage Log](docs/ai-usage-log.md)
 - Swagger UI — available at `http://localhost:3000/api/docs` when the backend is running
+
+---
+
+## Diagrams
+
+Visual references for the system's architecture and key workflows. Source files (`.mmd`) are in [`docs/diagrams/mmd-files/`](docs/diagrams/mmd-files/).
+
+| # | Diagram | Description |
+|---|---------|-------------|
+| 1 | [Domain Entity Class Diagram](docs/diagrams/01-domain-entity-class-diagram.png) | Core domain entities and their relationships |
+| 2 | [Project Status State Machine](docs/diagrams/02-project-status-state-machine.png) | All valid project status transitions |
+| 3 | [Backend Architecture Class Diagram](docs/diagrams/03-backend-architecture-class-diagram.png) | NestJS layered architecture and module dependencies |
+| 4 | [Frontend Component Architecture](docs/diagrams/04-frontend-component-architecture.png) | React component tree and data-flow boundaries |
+| 5 | [Bid Acceptance Flow](docs/diagrams/05-bid-acceptance-flow.png) | Sequence diagram for the bid submission → acceptance cycle |
+| 6 | [Project Creation Flow](docs/diagrams/06-project-creation-flow.png) | Sequence diagram for client project creation |
+| 7 | [Authentication Flow](docs/diagrams/07-authentication-flow.png) | Supabase JWT sign-in and token verification flow |
 
 ---
 
