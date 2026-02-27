@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { httpClient } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,7 +22,7 @@ export function BidList({ projectId, userRole, projectStatus }: Props): React.Re
   useEffect(() => {
     if (!projectId) return;
     let mounted = true;
-    void api
+    void httpClient
       .get<Bid[]>(`/projects/${projectId}/bids?rankBy=${rankBy}`)
       .then((res) => {
         if (!mounted) return;

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { httpClient } from '@/services/api';
 import type { Milestone, CreateMilestoneDTO } from '@/types/domain';
 import { getMilestones } from '@/services/milestonesApi';
 
@@ -15,7 +15,7 @@ export function useCreateMilestone(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<Milestone, Error, CreateMilestoneDTO>({
-    mutationFn: async (dto) => (await api.post<Milestone>(`/projects/${projectId}/milestones`, dto)).data,
+    mutationFn: async (dto) => (await httpClient.post<Milestone>(`/projects/${projectId}/milestones`, dto)).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['milestones', projectId] });
     },

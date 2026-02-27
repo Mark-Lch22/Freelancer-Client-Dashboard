@@ -3,18 +3,18 @@ import { useAuth } from '../contexts/AuthContext';
 import { LoadingScreen } from './LoadingScreen';
 
 /**
- * Wraps routes that require an authenticated session.
- * Redirects to /login if no active session exists.
- * Shows nothing while the initial session check is in progress.
+ * Wraps routes that require an authenticated session AND a loaded user profile.
+ * Redirects to /login if either is missing.
+ * Shows a loading screen while the initial auth check is in progress.
  */
 export function ProtectedRoute(): React.ReactNode {
-  const { session, loading } = useAuth();
+  const { user, session, loading } = useAuth();
 
   if (loading) {
     return <LoadingScreen />;
   }
 
-  if (!session) {
+  if (!session || !user) {
     return <Navigate to="/login" replace />;
   }
 

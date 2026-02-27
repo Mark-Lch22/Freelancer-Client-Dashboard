@@ -6,26 +6,26 @@
 #     compile .ts → .js, but those tools must NOT ship in the final image.
 #   - Keeping the compilation isolated here lets Docker cache the layer: if
 #     only source files change, only stage-1 re-runs; the base OS layer and
-#     npm install layer are reused, making CI builds fast.
+#     pnpm install layer are reused, making CI builds fast.
 # =============================================================================
 FROM node:20-alpine AS builder
 
+RUN corepack enable && corepack prepare pnpm@10.8.0 --activate
+
 WORKDIR /app
 
-# Copy manifests first so Docker can cache the npm-install layer separately
-# from source changes. Re-installing only happens when package*.json changes.
-COPY package.json ./
+# Copy manifests first so Docker can cache the pnpm-install layer separately
+# from source changes. Re-installing only happens when these files change.
+COPY package.json pnpm-lock.yaml .npmrc ./
 
 # Install ALL dependencies (including devDependencies) needed to compile TS.
-# Using `npm install` because the backend has no dedicated lockfile — the root
-# workspace lockfile lives outside this build context.
-RUN npm install
+RUN pnpm install --frozen-lockfile
 
 # Copy source after deps so edits to .ts files don't bust the install cache
 COPY . .
 
 # Compile TypeScript → JavaScript (output goes to ./dist per nest-cli.json)
-RUN npm run build
+RUN pnpm build
 
 
 # =============================================================================
@@ -40,6 +40,8 @@ RUN npm run build
 # =============================================================================
 FROM node:20-alpine AS production
 
+RUN corepack enable && corepack prepare pnpm@10.8.0 --activate
+
 # Run as a non-root user for security — principle of least privilege.
 # node:alpine ships with user 'node' (uid 1000) by default.
 RUN mkdir -p /app && chown node:node /app
@@ -47,9 +49,9 @@ USER node
 WORKDIR /app
 
 # Copy manifests and install ONLY production dependencies.
-# --omit=dev ensures devDependencies are never installed here.
-COPY --chown=node:node package.json ./
-RUN npm install --omit=dev
+# --prod ensures devDependencies are never installed here.
+COPY --chown=node:node package.json pnpm-lock.yaml .npmrc ./
+RUN pnpm install --frozen-lockfile --prod
 
 # Copy the compiled JavaScript from the builder stage — no .ts files included.
 COPY --chown=node:node --from=builder /app/dist ./dist

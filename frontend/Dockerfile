@@ -5,19 +5,22 @@
 #   - Vite, TypeScript, all @types/* packages, and testing tools are needed to
 #     produce optimised static assets but are completely useless at serve time.
 #   - Isolating the build lets us discard ~200 MB of tooling from the final
-#     image. The builder stage is also cache-friendly: the npm install layer
-#     only re-runs when package*.json changes, not on every source edit.
+#     image. The builder stage is also cache-friendly: the pnpm install layer
+#     only re-runs when package.json / pnpm-lock.yaml change, not on every
+#     source edit.
 # =============================================================================
 FROM node:20-alpine AS build
+
+RUN corepack enable && corepack prepare pnpm@10.8.0 --activate
 
 WORKDIR /app
 
 # Install deps before copying source so Docker can cache this layer.
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml .npmrc ./
+RUN pnpm install --frozen-lockfile
 
 # Copy source and compile.
-# `npm run build` runs `tsc && vite build`, producing optimised assets in
+# `pnpm build` runs `tsc && vite build`, producing optimised assets in
 # ./dist. Vite performs tree-shaking, code-splitting, and minification here.
 COPY . .
 
@@ -33,7 +36,7 @@ ENV VITE_API_URL=$VITE_API_URL \
     VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
     VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
-RUN npm run build
+RUN pnpm build
 
 
 # =============================================================================

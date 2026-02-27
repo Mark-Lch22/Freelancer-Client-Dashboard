@@ -37,21 +37,26 @@ export function LoginPage(): React.ReactNode {
     }
 
     setSubmitting(true);
-    const { error: authError, data } = await login(formData) as { error: any; data?: { session?: { user?: { id: string } } } };
-    setSubmitting(false);
+    try {
+      const { error: authError, data } = await login(formData);
 
-    if (authError) {
-      if (authError.status === 400) {
-        setError('The email or password you entered is incorrect.');
-      } else {
-        setError(authError.message);
+      if (authError) {
+        if (authError.status === 400) {
+          setError('The email or password you entered is incorrect.');
+        } else {
+          setError(authError.message ?? 'Something went wrong. Please try again.');
+        }
+        return;
       }
-      return;
-    }
 
-    // Only navigate once sign-in returned a session (AuthContext already set state)
-    if (data?.session?.user) {
-      navigate('/', { replace: true });
+      // Navigate once sign-in returned a session (AuthContext already set state)
+      if (data?.session) {
+        navigate('/', { replace: true });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+    } finally {
+      setSubmitting(false);
     }
   }
 

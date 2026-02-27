@@ -60,22 +60,27 @@ export function RegisterPage(): React.ReactNode {
     }
 
     setSubmitting(true);
-    const { error: authError } = await register(formData);
-    setSubmitting(false);
+    try {
+      const { error: authError } = await register(formData);
 
-    if (authError) {
-      if (authError.message?.includes('already registered')) {
-        setError('An account with this email already exists.');
-      } else {
-        setError(authError.message);
+      if (authError) {
+        if (authError.message?.includes('already registered')) {
+          setError('An account with this email already exists.');
+        } else {
+          setError(authError.message ?? 'Something went wrong. Please try again.');
+        }
+        return;
       }
-      return;
+
+      setRegistered(true);
+
+      const dest = formData.role === UserRole.CLIENT ? '/client/dashboard' : '/freelancer/dashboard';
+      navigate(dest, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+    } finally {
+      setSubmitting(false);
     }
-
-    setRegistered(true);
-
-    const dest = formData.role === UserRole.CLIENT ? '/client/dashboard' : '/freelancer/dashboard';
-    navigate(dest, { replace: true });
   }
 
   return (
