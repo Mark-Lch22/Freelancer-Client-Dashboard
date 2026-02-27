@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
@@ -136,7 +136,10 @@ export function ProjectDetailPage(): React.ReactElement {
 
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
-  const visibleTabs = project ? getVisibleTabs(project) : (['overview'] as TabId[]);
+  const visibleTabs = useMemo(
+    () => (project ? getVisibleTabs(project) : (['overview'] as TabId[])),
+    [project],
+  );
 
   // Reset active tab if it becomes hidden after a status change
   useEffect(() => {
