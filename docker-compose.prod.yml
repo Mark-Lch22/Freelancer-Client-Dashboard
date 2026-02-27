@@ -1,0 +1,44 @@
+# docker-compose.prod.yml
+#
+# Pulls pre-built images from Docker Hub instead of building locally.
+# Use this file when deploying to a server that has Docker installed.
+#
+# Quick start:
+#   cp .env.prod.example .env.prod
+#   # Fill in real values in .env.prod
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+#
+# To update to the latest images after a new CI push:
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod pull
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+
+services:
+  # ---------------------------------------------------------------------------
+  # Backend API — NestJS
+  # ---------------------------------------------------------------------------
+  backend:
+    image: ${DOCKERHUB_USERNAME}/freelancer-dashboard-api:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+    ports:
+      - '${BACKEND_PORT:-3000}:3000'
+    # Expose port only on loopback if you put a reverse proxy (nginx/Caddy)
+    # in front. Replace the line above with:
+    #   - '127.0.0.1:3000:3000'
+
+  # ---------------------------------------------------------------------------
+  # Frontend — React (compiled) served by nginx
+  # ---------------------------------------------------------------------------
+  frontend:
+    image: ${DOCKERHUB_USERNAME}/freelancer-dashboard-web:${TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - '${FRONTEND_PORT:-80}:80'
+    depends_on:
+      - backend

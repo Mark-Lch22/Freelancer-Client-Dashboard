@@ -1,0 +1,107 @@
+name: Build & Push Docker Images
+
+# Triggers:
+#   - Every push to main (rolling "latest" tag)
+#   - Every semver tag push, e.g. v1.2.3  (immutable versioned tag)
+#   - Manual dispatch from the GitHub Actions UI (useful for re-tagging)
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
+  workflow_dispatch:
+
+
+env:
+  BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/freelancer-dashboard-api
+  FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/freelancer-dashboard-web
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Backend — NestJS API
+  # ---------------------------------------------------------------------------
+  build-backend:
+    name: Backend Docker image
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Extract Docker metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.BACKEND_IMAGE }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=tag
+          type=sha,prefix=sha-,format=short
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        context: ./backend
+        target: production
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # ---------------------------------------------------------------------------
+  # Frontend — React + Vite → nginx static image
+  # ---------------------------------------------------------------------------
+  build-frontend:
+    name: Frontend Docker image
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Extract Docker metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.FRONTEND_IMAGE }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=tag
+          type=sha,prefix=sha-,format=short
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        context: ./frontend
+        target: serve
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+        build-args: |
+          VITE_API_URL=${{ secrets.VITE_API_URL }}
+          VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

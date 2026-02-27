@@ -3,7 +3,18 @@
 Platform for managing freelance projects — connecting clients with freelancers and tracking the full project lifecycle from bid to delivery.
 
 **Team:** Zlaten Vek
-**Stack:** React 18 + Vite · NestJS · PostgreSQL (Supabase) · Docker · GitHub Actions · GCP
+**Stack:** React 19 + Vite · NestJS · PostgreSQL (Supabase) · Docker · GitHub Actions
+
+---
+
+## Docker Hub Images
+
+Pre-built images are published automatically to Docker Hub on every push to `main`.
+
+| Image | Link |
+|-------|------|
+| Backend | [`kaloyangavrilov/freelancer-dashboard-api`](https://hub.docker.com/r/kaloyangavrilov/freelancer-dashboard-api) |
+| Frontend | [`kaloyangavrilov/freelancer-dashboard-web`](https://hub.docker.com/r/kaloyangavrilov/freelancer-dashboard-web) |
 
 ---
 
@@ -11,7 +22,7 @@ Platform for managing freelance projects — connecting clients with freelancers
 
 ### Frontend
 
-A single-page application built with **React 18**, **TypeScript**, and **Vite**. State management uses **TanStack Query** for server state and local React state for UI concerns. The app communicates with the backend via a typed Axios client. In production the compiled static assets are uploaded to a **Google Cloud Storage** bucket fronted by **Cloud CDN** for global low-latency delivery.
+A single-page application built with **React 19**, **TypeScript**, and **Vite**. State management uses **TanStack Query** for server state and local React state for UI concerns. The app communicates with the backend via a typed Axios client. Authentication flows through Supabase JWT tokens, which are automatically attached to every API request.
 
 ### Backend
 
@@ -23,7 +34,7 @@ A **NestJS** REST API written in TypeScript. The architecture follows a layered 
 
 ### Deployment
 
-Both services are containerised with **multi-stage Docker** builds. The backend image runs on **Google Cloud Run** (auto-scaling, pay-per-request). The frontend is served from **GCS + Cloud CDN**. **GitHub Actions** pipelines handle CI (lint → test → build) on every push/PR and CD (Docker push → Cloud Run deploy / GCS upload → CDN invalidation) on pushes to `main`.
+Both services are containerised with **multi-stage Docker** builds (see `frontend/Dockerfile` and `backend/Dockerfile`). **GitHub Actions** builds and pushes images to **Docker Hub** on every push to `main`. To run the latest deployment on any machine with Docker, pull the images using `docker-compose.prod.yml`.
 
 ---
 
@@ -31,19 +42,21 @@ Both services are containerised with **multi-stage Docker** builds. The backend 
 
 ```
 /
-├── frontend/          # React 18 + Vite + TypeScript
-├── backend/           # NestJS + TypeScript
-├── shared/            # Shared TypeScript types & enums
+├── frontend/                # React 19 + Vite + TypeScript
+├── backend/                 # NestJS + TypeScript
 ├── supabase/
-│   ├── migrations/    # SQL migration files
-│   └── db-schema.sql  # Full database schema
+│   ├── migrations/          # SQL migration files
+│   └── db-schema.sql        # Full database schema
 ├── docs/
-│   ├── adr/           # Architecture Decision Records
-│   ├── api.md         # API request/response examples
+│   ├── adr/                 # Architecture Decision Records
+│   ├── api.md               # API request/response examples
 │   └── ai-usage-log.md
 ├── .github/
-│   └── workflows/     # CI/CD pipelines
-└── docker-compose.yml
+│   └── workflows/
+│       ├── docker.yml       # Build & push images to Docker Hub
+│       └── frontend.yml     # Frontend CI (lint → test → build)
+├── docker-compose.yml       # Local development (builds images from source)
+└── docker-compose.prod.yml  # Production (pulls images from Docker Hub)
 ```
 
 ---
@@ -52,24 +65,126 @@ Both services are containerised with **multi-stage Docker** builds. The backend 
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| Node.js | >= 20.0.0 | Runtime for backend and frontend tooling |
+| Node.js | >= 20.0.0 | Runtime for local dev and frontend tooling |
 | npm | >= 10.0.0 | Package manager (workspaces) |
-| Docker & Docker Compose | Latest | Local containerised development |
+| Docker & Docker Compose | Latest | Containerised running of services |
 | Supabase account | — | Auth, database, and file storage |
-| GCP account (deploy only) | — | Cloud Run, GCS, Cloud CDN |
 
 ---
 
-## Local Setup
+## Option A — Run from Docker Hub (fastest)
+
+Pull and run the pre-built images without cloning the repo or installing Node.
+
+### 1. Download the production compose file
+
+```bash
+curl -O https://raw.githubusercontent.com/Mark-Lch22/Freelancer-Client-Dashboard/main/docker-compose.prod.yml
+curl -O https://raw.githubusercontent.com/Mark-Lch22/Freelancer-Client-Dashboard/main/.env.prod.example
+```
+
+Or if you already have the repo cloned, just use the files in place.
+
+### 2. Create your environment file
+
+```bash
+cp .env.prod.example .env.prod
+```
+
+Open `.env.prod` and fill in your Supabase credentials (found in **Supabase Dashboard → Settings → API**):
+
+```env
+DOCKERHUB_USERNAME=kaloyangavrilov
+TAG=latest
+
+BACKEND_PORT=3000
+FRONTEND_PORT=80
+
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your-anon-public-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_JWT_SECRET=your-jwt-secret
+```
+
+### 3. Pull and start
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:80 |
+| Backend API | http://localhost:3000 |
+| Swagger Docs | http://localhost:3000/api/docs |
+
+### 4. Update to the latest images
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod pull
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+### 5. Stop
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod down
+```
+
+---
+
+## Option B — Local Docker build (from source)
+
+Builds both images locally from source code. Useful for testing Dockerfile changes.
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/freelancer-client-dashboard.git
-cd freelancer-client-dashboard
+git clone https://github.com/Mark-Lch22/Freelancer-Client-Dashboard.git
+cd Freelancer-Client-Dashboard
 ```
 
-### 2. Install dependencies (all workspaces)
+### 2. Configure environment variables
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Fill in both files with your Supabase credentials.
+
+### 3. Build and start
+
+```bash
+docker compose up --build
+```
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:3000 |
+| Swagger Docs | http://localhost:3000/api/docs |
+
+### 4. Stop
+
+```bash
+docker compose down
+```
+
+---
+
+## Option C — Local development (Node.js)
+
+Run each service directly with hot-reload. Requires Node.js >= 20 installed.
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Mark-Lch22/Freelancer-Client-Dashboard.git
+cd Freelancer-Client-Dashboard
+```
+
+### 2. Install dependencies
 
 ```bash
 npm install
@@ -78,28 +193,19 @@ npm install
 ### 3. Configure environment variables
 
 ```bash
-# Backend
 cp backend/.env.example backend/.env
-
-# Frontend
 cp frontend/.env.example frontend/.env
 ```
 
-Fill in the values from your Supabase project dashboard (**Settings → API**).
+Fill in both files with your Supabase credentials.
 
-### 4. Start with Docker Compose
-
-```bash
-docker compose up
-```
-
-### 5. Or run each service individually
+### 4. Start services
 
 ```bash
-# Backend (hot-reload)
+# Backend (hot-reload on file changes)
 npm run start:dev --workspace=backend
 
-# Frontend (Vite dev server)
+# Frontend (Vite dev server with HMR) — in a second terminal
 npm run dev --workspace=frontend
 ```
 
@@ -108,7 +214,6 @@ npm run dev --workspace=frontend
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:3000 |
 | Swagger Docs | http://localhost:3000/api/docs |
-| PostgreSQL | localhost:5432 |
 
 ---
 
@@ -116,96 +221,67 @@ npm run dev --workspace=frontend
 
 ### Backend (`backend/.env`)
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `SUPABASE_URL` | Public URL of your Supabase project | `https://xxxx.supabase.co` |
-| `SUPABASE_ANON_KEY` | Anon/public key (respects RLS) | `eyJhbGci...` |
-| `SUPABASE_JWT_SECRET` | JWT secret for server-side token verification | `your-jwt-secret` |
-| `PORT` | Server port | `3000` |
-| `NODE_ENV` | Environment mode | `development` |
+| Variable | Description |
+|----------|-------------|
+| `SUPABASE_URL` | Public URL of your Supabase project |
+| `SUPABASE_ANON_KEY` | Anon/public key (respects RLS) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service-role key — bypasses RLS, **never expose to the browser** |
+| `SUPABASE_JWT_SECRET` | JWT secret for server-side token verification |
+| `PORT` | Server port (default: `3000`) |
+| `NODE_ENV` | Environment mode (`development` / `production`) |
 
 ### Frontend (`frontend/.env`)
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `VITE_SUPABASE_URL` | Public URL of your Supabase project | `https://xxxx.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Anon/public key (safe for browser) | `eyJhbGci...` |
-| `VITE_API_URL` | Backend API base URL | `http://localhost:3000` |
+| Variable | Description |
+|----------|-------------|
+| `VITE_SUPABASE_URL` | Public URL of your Supabase project |
+| `VITE_SUPABASE_ANON_KEY` | Anon/public key (safe for the browser) |
+| `VITE_API_URL` | Backend API base URL (e.g. `http://localhost:3000`) |
+
+> **Note:** `VITE_*` variables are **baked into the JavaScript bundle at build time** by Vite. The Docker Hub frontend image already has these values compiled in from the CI build. If you need to point at a different backend, rebuild the image with updated `VITE_API_URL`.
 
 ---
 
 ## Running Tests
 
 ```bash
-# Run all tests across workspaces
+# All tests across workspaces
 npm run test
 
-# Backend tests only
+# Backend only
 npm run test --workspace=backend
 
-# Backend tests with coverage
-npm run test:coverage --workspace=backend
-
-# Frontend tests only
+# Frontend only
 npm run test --workspace=frontend
-
-# Frontend tests with coverage
-npm run test:coverage --workspace=frontend
-```
-
----
-
-## Workspace Commands
-
-```bash
-# Lint all packages
-npm run lint
-
-# Build all packages
-npm run build
-
-# Target a specific workspace
-npm run lint --workspace=frontend
-npm run lint:fix --workspace=backend
 ```
 
 ---
 
 ## CI/CD
 
-GitHub Actions runs two separate pipelines defined in `.github/workflows/`.
+GitHub Actions runs the following pipelines:
 
-| Workflow | Trigger path filter | Stages |
-|----------|---------------------|--------|
-| `backend.yml` | `backend/**`, `shared/**` | lint → test → build → docker push → Cloud Run deploy |
-| `frontend.yml` | `frontend/**` | lint → test → build → GCS upload → CDN invalidation |
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| `docker.yml` | Push to `main`, version tags (`v*.*.*`), manual | Builds both Docker images and pushes them to Docker Hub |
+| `frontend.yml` | Changes to `frontend/**` | Lint → test → build (verifies the frontend compiles cleanly) |
 
-Docker push and deploy jobs run only on direct pushes to `main`. Lint, test, and build run on both push and PR events. A failing lint or test step blocks all downstream jobs.
+The `docker.yml` workflow builds both images in parallel and tags them as:
+- `latest` — always points to the most recent `main` build
+- `sha-<short-commit>` — immutable reference to a specific build
+- `v1.2.3` — created when you push a git tag like `git tag v1.2.3 && git push --tags`
 
 ### Required GitHub Secrets
 
+Go to **Repository → Settings → Secrets and variables → Actions** and add:
+
 | Secret | Description |
 |--------|-------------|
-| `GCP_PROJECT_ID` | Google Cloud project ID |
-| `GCP_SA_KEY` | JSON key of a GCP service account |
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Supabase anonymous/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service-role key (backend only) |
-| `CLOUD_RUN_SERVICE_NAME` | Cloud Run service name for backend |
-| `GCS_BUCKET_NAME` | GCS bucket name for frontend assets |
-| `VITE_API_URL` | Production backend URL (injected at build) |
-| `VITE_SUPABASE_URL` | Production Supabase URL (injected at build) |
-| `VITE_SUPABASE_ANON_KEY` | Production Supabase anon key (injected at build) |
-
----
-
-## Deployed URLs
-
-| Service | URL |
-|---------|-----|
-| Frontend | https://freelancer-dashboard.example.com |
-| Backend API | https://api.freelancer-dashboard.example.com |
-| Swagger Docs | https://api.freelancer-dashboard.example.com/api/docs |
+| `DOCKERHUB_USERNAME` | Your Docker Hub username (`kaloyangavrilov`) |
+| `DOCKERHUB_TOKEN` | Docker Hub access token (**Account Settings → Security → Access Tokens**) |
+| `VITE_API_URL` | Production backend URL baked into the frontend image |
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |
 
 ---
 

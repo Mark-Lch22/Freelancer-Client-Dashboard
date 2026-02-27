@@ -20,6 +20,19 @@ RUN npm ci
 # `npm run build` runs `tsc && vite build`, producing optimised assets in
 # ./dist. Vite performs tree-shaking, code-splitting, and minification here.
 COPY . .
+
+# Vite bakes VITE_* variables into the JS bundle at build time.
+# These ARGs are injected by CI (e.g. docker build --build-arg VITE_API_URL=...).
+# They must be declared here — inside the stage that runs the build — so Vite
+# can read them from the environment. An empty default is fine for local builds
+# that pass a .env file separately.
+ARG VITE_API_URL
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ENV VITE_API_URL=$VITE_API_URL \
+    VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
+    VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+
 RUN npm run build
 
 
