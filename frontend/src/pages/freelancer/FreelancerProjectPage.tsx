@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, DollarSign, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -117,9 +117,12 @@ export function FreelancerProjectPage(): React.ReactElement {
   const defaultTab: TabId = 'overview';
   const [activeTab, setActiveTab] = useState<TabId>(defaultTab);
 
-  const visibleTabs: TabId[] = ['overview'];
-  if (showMilestones) visibleTabs.push('milestones');
-  if (showTimeLog) visibleTabs.push('timelog');
+  const visibleTabs = useMemo<TabId[]>(() => {
+    const tabs: TabId[] = ['overview'];
+    if (showMilestones) tabs.push('milestones');
+    if (showTimeLog) tabs.push('timelog');
+    return tabs;
+  }, [showMilestones, showTimeLog]);
 
   // Reset tab if it becomes invisible
   useEffect(() => {

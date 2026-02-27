@@ -23,7 +23,7 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
   return useMutation<Project, Error, CreateProjectDTO>({
     mutationFn: (dto) => createProject({ ...dto, initialStatus: 'OPEN' }),
-    onSuccess: (_data, _vars, _ctx) => {
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['client-projects'] });
     },
   });
