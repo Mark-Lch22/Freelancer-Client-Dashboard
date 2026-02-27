@@ -12,6 +12,7 @@ import CreateProjectForm from './components/project/CreateProjectForm';
 import { FreelancerDashboardPage } from './pages/freelancer/FreelancerDashboardPage';
 import { BrowseProjectsPage } from './pages/freelancer/BrowseProjectsPage';
 import { FreelancerBidsPage } from './pages/freelancer/FreelancerBidsPage';
+import { FreelancerProjectPage } from './pages/freelancer/FreelancerProjectPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -82,6 +83,7 @@ export default function App(): React.ReactNode {
                 <Route element={<DashboardLayout />}>
                   <Route path="/freelancer/dashboard" element={<FreelancerDashboardPage />} />
                   <Route path="/freelancer/projects" element={<BrowseProjectsPage />} />
+                  <Route path="/freelancer/projects/:id" element={<FreelancerProjectPage />} />
                   <Route path="/freelancer/bids" element={<FreelancerBidsPage />} />
                 </Route>
               </Route>

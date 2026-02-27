@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, XCircle, Clock, Loader2 } from 'lucide-react';
+import { CheckCircle2, Circle, XCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,16 @@ function StatusDot({ status }: { status: MilestoneStatus }): React.ReactElement 
     case 'APPROVED':
       return <CheckCircle2 className="h-5 w-5 text-green-600" />;
     case 'IN_PROGRESS':
-      return <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />;
+      return (
+        <svg viewBox="0 0 20 20" className="h-5 w-5 text-blue-500" aria-hidden="true">
+          {/* faint full circle background */}
+          <circle cx="10" cy="10" r="8" fill="currentColor" opacity="0.15" />
+          {/* solid right half */}
+          <path d="M10 2 A8 8 0 0 1 10 18 Z" fill="currentColor" />
+          {/* crisp border */}
+          <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      );
     case 'SUBMITTED':
       return <Clock className="h-5 w-5 text-amber-500" />;
     case 'REJECTED':

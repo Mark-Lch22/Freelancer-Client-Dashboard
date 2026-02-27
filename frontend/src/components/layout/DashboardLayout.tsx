@@ -43,6 +43,13 @@ const PAGE_TITLES: Record<string, string> = {
   '/freelancer/bids': 'My Bids',
 };
 
+function getPageTitle(pathname: string): string {
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  // Dynamic routes
+  if (/^\/freelancer\/projects\/[^/]+$/.test(pathname)) return 'Project';
+  return 'Dashboard';
+}
+
 export function DashboardLayout(): React.ReactElement {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -51,7 +58,7 @@ export function DashboardLayout(): React.ReactElement {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const navItems = user?.role === UserRole.CLIENT ? CLIENT_NAV : FREELANCER_NAV;
-  const pageTitle = PAGE_TITLES[pathname] ?? 'Dashboard';
+  const pageTitle = getPageTitle(pathname);
 
   async function handleLogout(): Promise<void> {
     try {
