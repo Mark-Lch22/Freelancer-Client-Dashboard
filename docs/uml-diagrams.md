@@ -585,7 +585,7 @@ sequenceDiagram
     Hook->>Hook: invalidate ['project', projectId]
 
     Hook-->>BidList: re-render with updated state
-    BidList-->>Client: bid shows "ACCEPTED" badge; project tab updates
+    BidList-->>Client: bid shows "ACCEPTED" badge, project tab updates
 ```
 
 ---
@@ -665,7 +665,7 @@ sequenceDiagram
 
     AuthCtx->>DB: SELECT * FROM users WHERE id = user.id
     DB-->>AuthCtx: { id, email, role, firstName, lastName }
-    AuthCtx->>AuthCtx: setUser(profile); setSession(session)
+    AuthCtx->>AuthCtx: setUser(profile) and setSession(session)
 
     AuthCtx-->>LoginPage: authenticated
     LoginPage-->>User: redirect based on role

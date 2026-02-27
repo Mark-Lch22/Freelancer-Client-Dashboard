@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCreateProject } from '@/hooks/useProjects';
+import { SessionExpiredError } from '@/services/api';
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -99,6 +100,7 @@ export default function CreateProjectForm(): React.ReactElement {
       toast.success('Project created and published!');
       navigate(`/projects/${project.id}`);
     } catch (err) {
+      if (err instanceof SessionExpiredError) return; // already handled by UnauthorizedHandler
       toast.error(err instanceof Error ? err.message : 'Failed to create project');
     }
   }

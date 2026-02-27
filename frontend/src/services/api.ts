@@ -6,6 +6,15 @@ import axios, {
 } from 'axios';
 import { supabase } from '@/lib/supabase';
 
+/** Thrown when the backend returns 401. The global UnauthorizedHandler in
+ *  App.tsx shows the toast and redirects — callers should NOT show a second toast. */
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('Session expired. Please log in again.');
+    this.name = 'SessionExpiredError';
+  }
+}
+
 const BASE_URL = (
   (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3000'
 ).replace(/\/$/, '');
@@ -37,7 +46,7 @@ httpClient.interceptors.response.use(
     if (error instanceof AxiosError) {
       if (error.response?.status === 401) {
         window.dispatchEvent(new CustomEvent('auth:unauthorized'));
-        return Promise.reject(new Error('Session expired. Please log in again.'));
+        return Promise.reject(new SessionExpiredError());
       }
       const serverMessage = (
         error.response?.data as { message?: string } | undefined
