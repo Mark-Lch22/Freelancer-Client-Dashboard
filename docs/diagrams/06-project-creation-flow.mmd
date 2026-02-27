@@ -1,0 +1,48 @@
+sequenceDiagram
+    actor Client
+    participant Form as CreateProjectForm
+    participant Hook as useCreateProject (Hook)
+    participant API as projectsApi (Axios)
+    participant Guard as SupabaseAuthGuard
+    participant Ctrl as ProjectsController
+    participant Svc as ProjectsService
+    participant Repo as IProjectRepository
+    participant DB as Supabase (PostgreSQL)
+
+    Client->>Form: fill form & click "Create"
+    Form->>Form: zod.parse(formData) — validate
+    Note over Form: title, description, budgetMin/Max, deadline, projectType, skills
+
+    Form->>Hook: mutate(createProjectDto)
+
+    Hook->>API: POST /projects { dto }
+    API->>Guard: HTTP request
+    Guard->>DB: supabase.auth.getUser(token)
+    DB-->>Guard: { user, role: CLIENT }
+    Guard-->>Ctrl: request.user populated
+
+    Ctrl->>Svc: create(dto, user.id)
+    Svc->>Repo: create({ ...dto, clientId, status: DRAFT })
+    Repo->>DB: INSERT INTO projects (...)
+    DB-->>Repo: Project { status: DRAFT }
+    Repo-->>Svc: project
+    Svc-->>Ctrl: project
+    Ctrl-->>API: 201 Created { project }
+
+    API->>API: PATCH /projects/:id/status { status: OPEN }
+    Note over API: Auto-transition DRAFT to OPEN
+    API->>Guard: HTTP request
+    Guard-->>Ctrl: authorized ✓
+    Ctrl->>Svc: updateStatus(id, OPEN, clientId)
+    Svc->>Svc: ProjectStateMachine.validate(DRAFT to OPEN)
+    Svc->>Repo: update(id, { status: OPEN })
+    Repo->>DB: UPDATE projects SET status='OPEN'
+    DB-->>Repo: updated project
+    Repo-->>Svc: project
+    Svc-->>Ctrl: project
+    Ctrl-->>API: 200 OK { project }
+    API-->>Hook: Project { status: OPEN }
+
+    Hook->>Hook: invalidate ['client-projects', clientId]
+    Hook-->>Form: success
+    Form-->>Client: redirect to /projects/:id

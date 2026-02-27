@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor User
+    participant LoginPage
+    participant AuthCtx as AuthProvider (Context)
+    participant Supabase as Supabase Auth
+    participant DB as Supabase (PostgreSQL)
+    participant Backend as NestJS API
+
+    User->>LoginPage: enter email + password
+    LoginPage->>AuthCtx: login(email, password)
+    AuthCtx->>Supabase: signInWithPassword({ email, password })
+    Supabase->>DB: validate credentials
+    DB-->>Supabase: user record
+    Supabase-->>AuthCtx: { session, user }
+
+    AuthCtx->>DB: SELECT * FROM users WHERE id = user.id
+    DB-->>AuthCtx: { id, email, role, firstName, lastName }
+    AuthCtx->>AuthCtx: setUser(profile) and setSession(session)
+
+    AuthCtx-->>LoginPage: authenticated
+    LoginPage-->>User: redirect based on role
+    Note over User: CLIENT to /client/dashboard
+    Note over User: FREELANCER to /freelancer/dashboard
+
+    Note over AuthCtx, Backend: Subsequent API calls
+    AuthCtx->>Backend: GET /projects (Authorization: Bearer <JWT>)
+    Backend->>Supabase: supabase.auth.getUser(token)
+    Supabase-->>Backend: { id, email }
+    Backend->>DB: SELECT role FROM users WHERE id = ?
+    DB-->>Backend: { role }
+    Backend-->>AuthCtx: protected resource data

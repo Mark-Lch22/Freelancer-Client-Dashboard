@@ -1,0 +1,136 @@
+classDiagram
+    direction TB
+
+    class User {
+        +UUID id
+        +string email
+        +UserRole role
+        +string firstName
+        +string lastName
+        +string avatarUrl
+        +string bio
+        +Date createdAt
+        +Date updatedAt
+    }
+
+    class Client {
+        +UUID id
+        +string companyName
+        +string website
+    }
+
+    class Freelancer {
+        +UUID id
+        +Decimal hourlyRate
+        +AvailabilityStatus availabilityStatus
+        +string portfolioUrl
+        +Decimal rating
+        +int completedProjectsCount
+        +Decimal onTimeDeliveryRate
+    }
+
+    class Project {
+        +UUID id
+        +UUID clientId
+        +UUID freelancerId
+        +string title
+        +string description
+        +Decimal budgetMin
+        +Decimal budgetMax
+        +Date deadline
+        +ProjectStatus status
+        +ProjectType projectType
+        +Decimal agreedRate
+        +Date createdAt
+        +Date updatedAt
+    }
+
+    class Bid {
+        +UUID id
+        +UUID projectId
+        +UUID freelancerId
+        +Decimal proposedRate
+        +int estimatedDurationDays
+        +string coverLetter
+        +BidStatus status
+        +Date createdAt
+        +Date updatedAt
+    }
+
+    class Milestone {
+        +UUID id
+        +UUID projectId
+        +string title
+        +string description
+        +Decimal amount
+        +int orderIndex
+        +MilestoneStatus status
+        +Date dueDate
+        +Date submittedAt
+        +Date approvedAt
+    }
+
+    class TimeEntry {
+        +UUID id
+        +UUID projectId
+        +UUID freelancerId
+        +UUID milestoneId
+        +Decimal hours
+        +string description
+        +Date date
+        +Date createdAt
+        +Date updatedAt
+    }
+
+    class File {
+        +UUID id
+        +UUID uploaderId
+        +UUID projectId
+        +UUID milestoneId
+        +string name
+        +string filePath
+        +int fileSize
+        +string mimeType
+        +FileType fileType
+    }
+
+    class Skill {
+        +UUID id
+        +string name
+    }
+
+    class Review {
+        +UUID id
+        +UUID projectId
+        +UUID reviewerId
+        +UUID revieweeId
+        +int rating
+        +string comment
+    }
+
+    class Dispute {
+        +UUID id
+        +UUID projectId
+        +UUID initiatorId
+        +string reason
+        +string resolution
+    }
+
+    User <|-- Client : extends
+    User <|-- Freelancer : extends
+
+    Client "1" --> "0..*" Project : creates
+    Freelancer "0..1" --> "0..*" Project : assigned to
+    Project "1" --> "0..*" Bid : receives
+    Freelancer "1" --> "0..*" Bid : submits
+    Project "1" --> "0..*" Milestone : has
+    Project "1" --> "0..*" TimeEntry : tracks
+    Freelancer "1" --> "0..*" TimeEntry : logs
+    Milestone "0..1" --> "0..*" TimeEntry : groups
+    Project "1" --> "0..*" File : stores
+    Milestone "0..1" --> "0..*" File : deliverables
+    User "1" --> "0..*" File : uploads
+    Project "0..*" --> "0..*" Skill : requires
+    Freelancer "0..*" --> "0..*" Skill : has
+    Project "1" --> "0..*" Review : receives
+    Project "1" --> "0..1" Dispute : escalates to

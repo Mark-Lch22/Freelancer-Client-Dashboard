@@ -1,0 +1,183 @@
+classDiagram
+    direction TB
+
+    class App {
+        +Router routes
+        +AuthProvider
+        +QueryClientProvider
+    }
+
+    class AuthProvider {
+        -user: AuthUser
+        -session: Session
+        +login(email, password)
+        +register(data)
+        +logout()
+    }
+
+    class ProtectedRoute {
+        +children: ReactNode
+        -redirectTo: string
+    }
+
+    class RoleRoute {
+        +allowedRoles: UserRole[]
+        +children: ReactNode
+    }
+
+    class ClientDashboard {
+        -clientId: string
+        +useClientProjects()
+        +renderProjectList()
+        +renderStats()
+    }
+
+    class ProjectDetailPage {
+        -projectId: string
+        +useProject()
+        +useBidsForProject()
+        +useMilestones()
+        +useTimeEntries()
+        +renderOverviewTab()
+        +renderBidsTab()
+        +renderMilestonesTab()
+        +renderTimelogTab()
+    }
+
+    class CreateProjectForm {
+        +useCreateProject()
+        +zodSchema: ZodSchema
+        +onSubmit(data)
+    }
+
+    class BidList {
+        +bids: Bid[]
+        +useAcceptBid()
+        +useRejectBid()
+        +renderRankedBids()
+    }
+
+    class BidForm {
+        +projectId: string
+        +useSubmitBid()
+        +zodSchema: ZodSchema
+    }
+
+    class ProjectMilestones {
+        +projectId: string
+        +useMilestones()
+        +useCreateMilestone()
+        +renderMilestoneList()
+    }
+
+    class TimeEntryList {
+        +projectId: string
+        +useTimeEntries()
+        +useLogTime()
+        +renderEntries()
+    }
+
+    class useProjects {
+        <<hook>>
+        +queryKey: string[]
+        +fetchProjects(filters)
+    }
+
+    class useClientProjects {
+        <<hook>>
+        +queryKey: string[]
+        +fetchClientProjects(clientId)
+    }
+
+    class useCreateProject {
+        <<hook>>
+        +mutate(dto)
+        +invalidates: client-projects
+    }
+
+    class useBidsForProject {
+        <<hook>>
+        +queryKey: string[]
+        +fetchBids(projectId)
+    }
+
+    class useAcceptBid {
+        <<hook>>
+        +mutate(bidId)
+        +invalidates: bids, project
+    }
+
+    class useMilestones {
+        <<hook>>
+        +queryKey: string[]
+        +fetchMilestones(projectId)
+    }
+
+    class useTimeEntries {
+        <<hook>>
+        +queryKey: string[]
+        +fetchTimeEntries(projectId)
+    }
+
+    class useLogTime {
+        <<hook>>
+        +mutate(dto)
+        +optimisticUpdate: true
+    }
+
+    class projectsApi {
+        <<service>>
+        +createProject(dto)
+        +getProjects(query)
+        +getProjectById(id)
+        +updateProjectStatus(id, dto)
+        +deleteProject(id)
+    }
+
+    class bidsApi {
+        <<service>>
+        +createBid(projectId, dto)
+        +getBidsForProject(projectId, rankBy)
+        +acceptBid(bidId)
+        +rejectBid(bidId)
+    }
+
+    class milestonesApi {
+        <<service>>
+        +getMilestones(projectId)
+        +createMilestone(projectId, dto)
+        +updateMilestone(milestoneId, dto)
+    }
+
+    class timeEntriesApi {
+        <<service>>
+        +getTimeEntries(projectId)
+        +createTimeEntry(projectId, dto)
+    }
+
+    App --> AuthProvider
+    App --> ProtectedRoute
+    App --> RoleRoute
+    ProtectedRoute --> ClientDashboard
+    ProtectedRoute --> ProjectDetailPage
+    RoleRoute --> CreateProjectForm
+
+    ProjectDetailPage --> BidList
+    ProjectDetailPage --> ProjectMilestones
+    ProjectDetailPage --> TimeEntryList
+
+    ClientDashboard --> useClientProjects
+    CreateProjectForm --> useCreateProject
+    ProjectDetailPage --> useBidsForProject
+    BidList --> useAcceptBid
+    ProjectMilestones --> useMilestones
+    TimeEntryList --> useTimeEntries
+    TimeEntryList --> useLogTime
+
+    useClientProjects --> projectsApi
+    useCreateProject --> projectsApi
+    useBidsForProject --> bidsApi
+    useAcceptBid --> bidsApi
+    useMilestones --> milestonesApi
+    useTimeEntries --> timeEntriesApi
+    useLogTime --> timeEntriesApi

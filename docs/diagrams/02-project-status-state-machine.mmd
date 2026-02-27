@@ -1,0 +1,21 @@
+stateDiagram-v2
+    [*] --> DRAFT : project created
+    DRAFT --> OPEN : client publishes
+    DRAFT --> CANCELLED : client cancels
+
+    OPEN --> IN_PROGRESS : bid accepted
+    OPEN --> CANCELLED : client cancels
+
+    IN_PROGRESS --> REVIEW : work submitted
+    IN_PROGRESS --> DISPUTED : dispute filed
+    IN_PROGRESS --> CANCELLED : client cancels
+
+    REVIEW --> COMPLETED : client approves
+    REVIEW --> IN_PROGRESS : client requests changes
+    REVIEW --> DISPUTED : dispute filed
+
+    DISPUTED --> COMPLETED : resolved
+    DISPUTED --> CANCELLED : resolved & cancelled
+
+    COMPLETED --> [*]
+    CANCELLED --> [*]

@@ -1,0 +1,64 @@
+sequenceDiagram
+    actor Client
+    participant BidList as BidList (React)
+    participant Hook as useAcceptBid (Hook)
+    participant API as bidsApi (Axios)
+    participant Guard as SupabaseAuthGuard
+    participant RGuard as RolesGuard
+    participant Ctrl as BidsController
+    participant Svc as BidsService
+    participant BidRepo as IBidRepository
+    participant ProjRepo as IProjectRepository
+    participant DB as Supabase (PostgreSQL)
+
+    Client->>BidList: click "Accept" on bid
+    BidList->>Hook: mutate(bidId)
+    Hook->>API: PATCH /bids/:bidId/accept
+    Note over API: Attach JWT in Authorization header
+
+    API->>Guard: HTTP request with Bearer token
+    Guard->>DB: supabase.auth.getUser(token)
+    DB-->>Guard: { user, role: CLIENT }
+    Guard-->>Ctrl: request.user populated
+
+    Guard->>RGuard: check @Roles(CLIENT)
+    RGuard-->>Ctrl: authorized ✓
+
+    Ctrl->>Svc: accept(bidId, clientId)
+    Svc->>BidRepo: findById(bidId)
+    BidRepo->>DB: SELECT * FROM bids WHERE id = bidId
+    DB-->>BidRepo: Bid { status: PENDING }
+    BidRepo-->>Svc: bid
+
+    Note over Svc: Validate bid.status === PENDING
+
+    Svc->>ProjRepo: findById(bid.projectId)
+    ProjRepo->>DB: SELECT * FROM projects WHERE id = bid.projectId
+    DB-->>ProjRepo: Project { clientId, status: OPEN }
+    ProjRepo-->>Svc: project
+
+    Note over Svc: Validate project.clientId === clientId
+
+    Svc->>BidRepo: rejectOthers(projectId, bidId)
+    BidRepo->>DB: UPDATE bids SET status='REJECTED' WHERE project_id=? AND id != ?
+    DB-->>BidRepo: updated rows
+
+    Svc->>BidRepo: update(bidId, { status: ACCEPTED })
+    BidRepo->>DB: UPDATE bids SET status='ACCEPTED' WHERE id = bidId
+    DB-->>BidRepo: updated bid
+
+    Svc->>ProjRepo: update(projectId, { status: IN_PROGRESS, freelancerId, agreedRate })
+    ProjRepo->>DB: UPDATE projects SET status='IN_PROGRESS', freelancer_id=?, agreed_rate=?
+    Note over DB: DB trigger validates state transition (OPEN → IN_PROGRESS ✓)
+    Note over DB: DB trigger inserts into project_state_history
+    DB-->>ProjRepo: updated project
+
+    Svc-->>Ctrl: accepted Bid
+    Ctrl-->>API: 200 OK { bid }
+    API-->>Hook: Bid { status: ACCEPTED }
+
+    Hook->>Hook: invalidate ['bids', projectId]
+    Hook->>Hook: invalidate ['project', projectId]
+
+    Hook-->>BidList: re-render with updated state
+    BidList-->>Client: bid shows "ACCEPTED" badge, project tab updates

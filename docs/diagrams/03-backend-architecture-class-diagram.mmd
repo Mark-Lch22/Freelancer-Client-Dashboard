@@ -1,0 +1,147 @@
+classDiagram
+    direction LR
+
+    class SupabaseAuthGuard {
+        -supabase: SupabaseClient
+        +canActivate(context) bool
+        -extractToken(request) string
+    }
+
+    class RolesGuard {
+        -reflector: Reflector
+        +canActivate(context) bool
+    }
+
+    class ProjectsController {
+        +create(dto, user) Project
+        +findAll(query) PaginatedResponse
+        +findById(id) Project
+        +updateStatus(id, dto, user) Project
+        +remove(id, user) void
+    }
+
+    class BidsController {
+        +create(projectId, dto, user) Bid
+        +findByProject(projectId, rankBy) Bid[]
+        +accept(bidId, user) Bid
+        +reject(bidId, user) Bid
+    }
+
+    class MilestonesController {
+        +findByProject(projectId) Milestone[]
+        +create(projectId, dto, user) Milestone
+        +updateStatus(milestoneId, dto) Milestone
+        +uploadFile(milestoneId, file, user) File
+        +downloadFile(fileId, user) RedirectResponse
+    }
+
+    class TimeEntriesController {
+        +create(projectId, dto, user) TimeEntry
+        +findByProject(projectId) TimeEntry[]
+    }
+
+    class ProjectsService {
+        -projectRepo: IProjectRepository
+        +create(dto, clientId) Project
+        +findAll(query) PaginatedResponse
+        +findById(id) Project
+        +updateStatus(id, status, clientId) Project
+        +remove(id, clientId) void
+    }
+
+    class BidsService {
+        -bidRepo: IBidRepository
+        -projectRepo: IProjectRepository
+        -rankingFactory: BidRankingStrategyFactory
+        +create(projectId, dto, freelancerId) Bid
+        +findByProject(projectId, rankBy) Bid[]
+        +accept(bidId, clientId) Bid
+        +reject(bidId, clientId) Bid
+    }
+
+    class MilestonesService {
+        -milestoneRepo: IMilestoneRepository
+        -fileRepo: IFileRepository
+        +findByProject(projectId) Milestone[]
+        +create(projectId, dto, clientId) Milestone
+        +updateStatus(milestoneId, status) Milestone
+        +uploadDeliverable(milestoneId, file, userId) File
+        +getDownloadUrl(fileId, userId) string
+    }
+
+    class TimeEntriesService {
+        -timeEntryRepo: ITimeEntryRepository
+        +create(projectId, dto, freelancerId) TimeEntry
+        +findByProject(projectId) TimeEntry[]
+    }
+
+    class BidRankingStrategyFactory {
+        +getStrategy(rankBy) IBidRankingStrategy
+    }
+
+    class IProjectRepository {
+        <<interface>>
+        +create(data) Project
+        +findAll(query) PaginatedResponse
+        +findById(id) Project
+        +update(id, data) Project
+        +delete(id) void
+    }
+
+    class IBidRepository {
+        <<interface>>
+        +create(data) Bid
+        +findByProject(projectId) Bid[]
+        +findById(id) Bid
+        +update(id, data) Bid
+        +rejectOthers(projectId, acceptedBidId) void
+    }
+
+    class IMilestoneRepository {
+        <<interface>>
+        +findByProject(projectId) Milestone[]
+        +create(data) Milestone
+        +update(id, data) Milestone
+    }
+
+    class ITimeEntryRepository {
+        <<interface>>
+        +create(data) TimeEntry
+        +findByProject(projectId) TimeEntry[]
+    }
+
+    class SupabaseProjectRepository {
+        -supabase: SupabaseClient
+    }
+
+    class SupabaseBidRepository {
+        -supabase: SupabaseClient
+    }
+
+    class SupabaseMilestoneRepository {
+        -supabase: SupabaseClient
+    }
+
+    class SupabaseTimeEntryRepository {
+        -supabase: SupabaseClient
+    }
+
+    SupabaseAuthGuard --> ProjectsController : guards
+    RolesGuard --> ProjectsController : guards
+
+    ProjectsController --> ProjectsService
+    BidsController --> BidsService
+    MilestonesController --> MilestonesService
+    TimeEntriesController --> TimeEntriesService
+
+    BidsService --> BidRankingStrategyFactory
+    BidsService --> IProjectRepository
+    ProjectsService --> IProjectRepository
+    BidsService --> IBidRepository
+    MilestonesService --> IMilestoneRepository
+    TimeEntriesService --> ITimeEntryRepository
+
+    IProjectRepository <|.. SupabaseProjectRepository
+    IBidRepository <|.. SupabaseBidRepository
+    IMilestoneRepository <|.. SupabaseMilestoneRepository
+    ITimeEntryRepository <|.. SupabaseTimeEntryRepository
